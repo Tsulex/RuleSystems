@@ -15,7 +15,8 @@
 		"css/jewelsSelector.css",
         "css/longRestActivities.css",
         "css/mailbox.css",
-        "css/recipes.css"
+        "css/recipes.css",
+        "css/darkMode.css"
 	],
     "url": "https://github.com/Tsulex/RulesSystems",
     "manifest": "https://raw.githubusercontent.com/Tsulex/RulesSystems/master/module.json",
