@@ -7,3 +7,64 @@ textarea{
 	background-color: #222;
 	color: #777;
 }
+
+.dark-mode .window-content .message{background: url(ui/parchment_dark.jpg) repeat; border: 2px solid #6f6c66; color: var(--5edark-rgb-text-white-2);}
+.dark-mode .window-content .message header{background: url(ui/parchment_dark.jpg) repeat; color:var(--5edark-rgb-text-white-2);}
+.dark-mode #chat-log .message ul {background: url(ui/parchment_dark.jpg) repeat; border: 0; color: var(--5edark-rgb-text-white-2);}
+.dark-mode .enhanced-conditions div.condition-reference {margin: 0;}
+.dark-mode img.condition-icon.chat-message {height: 25px; width: 25px; padding: unset; vertical-align: -webkit-baseline-middle;}
+.dark-mode .chat-message .table-draw .table-results .table-result {border-bottom-color: black;}
+.dark-mode a.entity-link-disabled {background: #00273a00; border: 1px solid #980a27e3;}
+a.entity-link-disabled {background: #DDD; padding: 1px 4px; border: 1px solid #4b4a44; border-radius: 2px;white-space: nowrap;word-break: break-all;}
+
+.dark-mode .lmrtfy.lmrtfy-parchment .window-content {background : url(/modules/dnd5e-dark-mode/ui/parchment_dark.jpg) repeat; padding: 5px;}
+
+.dark-mode .lmrtfy-parchment .lmrtfy-ability-check, .lmrtfy-parchment .lmrtfy-ability-save, .lmrtfy-parchment .lmrtfy-skill-check, .lmrtfy-parchment .lmrtfy-custom-formula, .lmrtfy-parchment .lmrtfy-initiative, .lmrtfy-parchment .lmrtfy-death-save, .lmrtfy-parchment .lmrtfy-perception {color:white; background : url(/modules/dnd5e-dark-mode/ui/parchment_dark.jpg) repeat;}
+
+.lmrtfy-parchment .lmrtfy-ability-check, .lmrtfy-parchment .lmrtfy-ability-save, .lmrtfy-parchment .lmrtfy-skill-check, .lmrtfy-parchment .lmrtfy-custom-formula, .lmrtfy-parchment .lmrtfy-initiative, .lmrtfy-parchment .lmrtfy-death-save, .lmrtfy-parchment .lmrtfy-perception {cursor: pointer;}
+
+.dark-mode .macro-sheet .form-group.command .furnace-macro-command.fullscreen {background: url(/modules/dnd5e-dark-mode/ui/parchment_dark.jpg) repeat;}
+
+.dark-mode .roll-type-select {color: black;}
+
+.dark-mode .dnd5e.sheet .editable h4.rollable:hover, .dnd5e.sheet .editable .rollable:hover > h4 {color: white;}
+
+.dark-mode .dnd5e.sheet.actor .spell-component.C, .dnd5edark.sheet.actor .spell-component.R {background: rgba(228, 184, 210, 0.72) !important;}
+
+.tidy5e.sheet.actor .list-layout .items-list .item i {
+    vertical-align: baseline !important;
+    width: auto !important;
+}
+
+.tidy5eDark .tidy5e.sheet.actor a.inline-roll {
+    color: #96b6dee3 !important;
+    background: #222222 !important;
+    padding: 1px 6px 1px 0px !important;
+}
+
+.tidy5e.sheet.actor #item-info-container a.inline-roll {
+    padding: 1px 6px 1px 0px !important;
+}
+
+.tidy5e.sheet.actor .rest-container div.resting {
+    display: block;
+    width: 35px;
+}
+
+.tidy5e.sheet.actor .resting a.rest.short-rest {
+    position: relative;
+    top: -32px;
+    opacity: 0;
+}
+
+.tidy5e.sheet.actor .rest-container.has-note .note {
+    left: 130% !important;
+}
+
+.gm-screen-actions.tabs button.item, .gm-screen-actions.tabs button.clear, .gm-screen-actions.tabs button.refresh, .gm-screen-actions.tabs button.gm-screen-button {
+    background: #111 !important;
+}
+
+.tidy5eDark option {
+    background: #222;
+}
