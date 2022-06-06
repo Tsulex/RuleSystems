@@ -1,0 +1,16 @@
+{
+    "name": "RulesSystems",
+    "title": "Rules Systems",
+    "description": "Configura todo lo referente a la partida de Rol",
+    "author": "Tsulex",
+    "version": "1.0.0",
+    "minimumCoreVersion": "9",
+    "compatibleCoreVersion": "9",
+    "minimumSystemVersion": "1.5.0",
+	"scripts": [
+		"scripts/craftingbook.js"
+	],
+    "styles": [
+		"css/styles.css"
+	]
+}
