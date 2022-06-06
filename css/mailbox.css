@@ -1,0 +1,32 @@
+.mailbox-select {
+    margin:20px auto 20px auto;	
+    border:1px solid #d9d9d9;
+    height:30px;
+    overflow: hidden;
+    width: 230px;
+    position:relative;
+ }
+ 
+ .mailbox-select::after{
+     content:"\025be";
+     display:table-cell;
+     padding-top:7px;
+     text-align:center;
+     width:30px;
+     height:30px;
+     background-color:#d9d9d9;
+     position:absolute;
+     top:0;
+     right:0px;	
+     pointer-events: none;
+ }
+ 
+ .mailbox-select-select{
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    height: 30px;
+    padding: 5px;
+    width: 250px;
+ }
+ .mailbox-select-select:focus{ outline: none;}
