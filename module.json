@@ -1,6 +1,6 @@
 {
-    "name": "RulesSystems",
-    "title": "Rules Systems",
+    "name": "RuleSystems",
+    "title": "Rule Systems",
     "description": "Configura todo lo referente a la partida de Rol",
     "system": ["dnd5e"],
     "authors": [{"name": "Tsulex"}],
@@ -8,6 +8,9 @@
     "minimumCoreVersion": "9",
     "compatibleCoreVersion": "9",
     "minimumSystemVersion": "1.5.0",
+    "esmodules": [
+        "ruleSystems.js"
+    ],
 	"scripts": [
 		"scripts/craftingbook.js"
 	],
@@ -18,7 +21,7 @@
         "css/mailbox.css",
         "css/recipes.css"
 	],
-    "url": "https://github.com/Tsulex/RulesSystems",
-    "manifest": "https://raw.githubusercontent.com/Tsulex/RulesSystems/master/module.json",
-    "download": "https://github.com/Tsulex/RulesSystems/archive/refs/heads/master.zip"
+    "url": "https://github.com/Tsulex/RuleSystems",
+    "manifest": "https://raw.githubusercontent.com/Tsulex/RuleSystems/master/module.json",
+    "download": "https://github.com/Tsulex/RuleSystems/archive/refs/heads/master.zip"
 }
