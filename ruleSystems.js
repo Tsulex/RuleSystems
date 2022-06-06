@@ -10,5 +10,5 @@ Hooks.once('init', async function () {
     console.log('ruleSystems | Initializing ruleSystems');
     registerSettings();
     canvasLayer();
-    boughtRecipes();
+    //boughtRecipes();
 });
