@@ -1,0 +1,9 @@
+body{
+	background-color: #111;
+}
+
+textarea{
+	border-color: black;
+	background-color: #222;
+	color: #777;
+}
