@@ -12,7 +12,6 @@
         "ruleSystems.js"
     ],
 	"scripts": [
-		"scripts/craftingbook.js"
 	],
     "styles": [
         "css/darkMode.css",
