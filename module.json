@@ -11,6 +11,9 @@
 		"scripts/craftingbook.js"
 	],
     "styles": [
-		"css/styles.css"
+		"css/jewelsSelector.css",
+        "css/longRestActivities.css",
+        "css/mailbox.css",
+        "css/recipes.css"
 	]
 }
