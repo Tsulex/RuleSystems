@@ -1,3 +1,9 @@
+Hooks.on("ready", () => {
+    if (!game.folders.getName("Bought Recipes")){
+        Folder.create({name:"Bought Recipes", type: "JournalEntry"})
+    }
+});
+
 Hooks.on("getSceneControlButtons", (controls) => {
 	controls.find(c => c.name === "token").tools.push({
         icon: "fas fa-books",
