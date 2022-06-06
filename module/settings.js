@@ -1,5 +1,6 @@
 export const registerSettings = function () {
     // Register any custom module settings here
+    let modulename = "RuleSystems";
     game.settings.register("ruleSystems", "craftingBook", {
         name: "Crafting Book",
         hint: "Activa el Crafting Book",
