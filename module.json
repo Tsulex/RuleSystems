@@ -4,7 +4,7 @@
     "description": "Configura todo lo referente a la partida de Rol",
     "system": ["dnd5e"],
     "authors": [{"name": "Tsulex"}],
-    "version": "1.0.0",
+    "version": "0.0.1",
     "minimumCoreVersion": "9",
     "compatibleCoreVersion": "9",
     "minimumSystemVersion": "1.5.0",
