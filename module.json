@@ -12,11 +12,11 @@
 		"scripts/craftingbook.js"
 	],
     "styles": [
+        "css/darkMode.css",
 		"css/jewelsSelector.css",
         "css/longRestActivities.css",
         "css/mailbox.css",
-        "css/recipes.css",
-        "css/darkMode.css"
+        "css/recipes.css"
 	],
     "url": "https://github.com/Tsulex/RulesSystems",
     "manifest": "https://raw.githubusercontent.com/Tsulex/RulesSystems/master/module.json",
