@@ -26,7 +26,7 @@ export const canvasLayer = function () {
                     name: "craftingbook",
                     title: "Crafting Book",
                     button: true,
-                    visible: game.settings.get("ruleSystems", "craftingBook"),
+                    visible: game.settings.get("RuleSystems", "craftingBook"),
                     onClick: () => {
                         craftingBook();
                     }

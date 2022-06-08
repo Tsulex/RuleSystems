@@ -3,7 +3,7 @@ export const registerSettings = function () {
     /* ------------------------------------ */
     /* CRAFTING         					*/
     /* ------------------------------------ */
-    game.settings.register("ruleSystems", "craftingBook", {
+    game.settings.register("RuleSystems", "craftingBook", {
         name: "Crafting Book",
         hint: "Activa el Crafting Book para su uso.",
         default: true,
@@ -13,7 +13,7 @@ export const registerSettings = function () {
         onChange: debouncedReload,
     });
 
-    game.settings.register("ruleSystems", "craftingBookName", {
+    game.settings.register("RuleSystems", "craftingBookName", {
         name: "Crafting Book Name",
         hint: "Poner el nombre de la carpeta que contendra las recetas.",
         default: "Bought Recipes",

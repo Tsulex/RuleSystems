@@ -8,7 +8,7 @@ import { canvasLayer } from "./module/canvasLayer.js";
 /* Initialize module					*/
 /* ------------------------------------ */
 Hooks.once('init', async function () {
-    console.log('ruleSystems | Initializing ruleSystems');
+    console.log('RuleSystems | Initializing ruleSystems');
     registerSettings();
     canvasLayer();
 });

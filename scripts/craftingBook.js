@@ -1,8 +1,8 @@
 export const craftingBook = function () {
 
-    if (game.folders.some(x => x.name == game.settings.get("ruleSystems", "craftingBookName"))){
+    if (game.folders.some(x => x.name == game.settings.get("RuleSystems", "craftingBookName"))){
 
-        const myRecipes = game.folders.getName(game.settings.get("ruleSystems", "craftingBookName")).contents.filter(j => j.permission >= 2).map(j => {
+        const myRecipes = game.folders.getName(game.settings.get("RuleSystems", "craftingBookName")).contents.filter(j => j.permission >= 2).map(j => {
             return Object.assign(JSON.parse(j.data.content.replace(/<\/?[^>]+(>|$)/g, "").replace(/(&nbsp;|\n)/g, '').replace(/\s\s+/g, ' ')),
             {
                 id: j.data._id,
