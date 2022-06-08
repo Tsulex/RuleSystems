@@ -1,14 +1,25 @@
 export const registerSettings = function () {
-    // Register any custom module settings here
-    let modulename = "RuleSystems";
+
+    /* ------------------------------------ */
+    /* CRAFTING         					*/
+    /* ------------------------------------ */
     game.settings.register("ruleSystems", "craftingBook", {
         name: "Crafting Book",
-        hint: "Activa el Crafting Book",
-        default: false,
+        hint: "Activa el Crafting Book para su uso.",
+        default: true,
         type: Boolean,
         scope: 'world',
         config: true,
         onChange: debouncedReload,
+    });
+
+    game.settings.register("ruleSystems", "craftingBookName", {
+        name: "Crafting Book Name",
+        hint: "Poner el nombre de la carpeta que contendra las recetas.",
+        default: "Bought Recipes",
+        type: String,
+        scope: 'world',
+        config: true
     });
 }
 

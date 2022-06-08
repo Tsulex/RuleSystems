@@ -1,4 +1,4 @@
-import { craftingBook } from "./craftingBook.js";
+import { craftingBook } from "../scripts/craftingBook.js";
 
 export const canvasLayer = function () {
     CONFIG.Canvas.layers["ruleSystems"] = {group: "effects", layerClass: RSLayer}
@@ -40,14 +40,5 @@ export const canvasLayer = function () {
 class RSLayer extends CanvasLayer {
     constructor() {
         super();
-        this.loader = new PIXI.Loader();
-
-        this.mouseInteractionManager = null;
-
-        this._interactiveChildren = false;
-        this._dragging = false;
-
-        this.options = this.constructor.layerOptions;
-
     }
 }
