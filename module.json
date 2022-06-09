@@ -12,6 +12,7 @@
         "ruleSystems.js"
     ],
 	"scripts": [
+        "functionMacros.js"
 	],
     "styles": [
         "css/darkMode.css",

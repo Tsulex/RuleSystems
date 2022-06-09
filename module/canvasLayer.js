@@ -34,7 +34,6 @@ export const canvasLayer = function () {
             ]
         })
     });
-
 }
 
 class RSLayer extends CanvasLayer {
