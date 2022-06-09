@@ -1,5 +1,13 @@
-class RS {
+import { socketlibSocket } from "./module/GMAction.js";
 
+export class RS {
+    constructor() {
+
+    }
+
+    /* ------------------------------------ */
+    /* Macro de craftear objetos			*/
+    /* ------------------------------------ */
     static async craftingStation() {
         const myRecipes = game.folders.getName("Bought Recipes").contents.filter(j => j.permission >= 2).map(j => {
             return Object.assign(JSON.parse(j.data.content.replace(/<\/?[^>]+(>|$)/g, "").replace(/(&nbsp;|\n)/g, '').replace(/\s\s+/g, ' ')),
@@ -54,8 +62,6 @@ class RS {
                                         
                                         // Eliminar los materiales consumidos...
                                         removeMaterials(consumedMaterials);
-                                        
-                                        this.execute();
                                     }
                                 
                                 } else if(craftData.days >= craftTime) {
@@ -335,7 +341,199 @@ class RS {
         }
     }
 
-    
-    
+    /* ------------------------------------ */
+    /* Macro de Short Rest Camping			*/
+    /* ------------------------------------ */
+    static async shortRest() {
+        const campFails = parseInt((game.journal.getName("Camping Fails").data.content.match(/-?\d+/g) || ['0'])[0]);
+        const activityDC = campFails >= 2 ? 15 : (campFails == 1 ? 10 : 5);
+        const burnDices = ['1d12', '1d10', '1d8', '1d6', '1d4'];
+        const tActor = _token.actor;
+
+        const sucess = doCheck(tActor.getRollData(), activityDC, "con", "Constitution", "Sleep", "Your sleep was undisturbed. Regain 1 spent hit die.", "You couldn't sleep well, waking up tired.");
+
+        tActor.shortRest({ dialog: true, chat: false, newDay: true });
+
+        tActor.update({
+            'data.attributes.hunger.heal': false,
+            'data.attributes.hunger.dice': false,
+            'data.attributes.thirst.heal': false,
+            'data.attributes.thirst.dice': false
+        })
+
+        if(sucess){
+            tActor.update({"data.spells.bd" : getFinalDice(tActor.getRollData(), 1)});
+            tActor.update(recoverAttributeData(tActor.getRollData(), "fatigue", 3));
+            editHitDice(1);
+        }
+
+            
+        function recoverAttributeData(data, attribute, recover) {
+            const attr = data.attributes[attribute];
+            const newData = {};
+            if(attr.value - recover > attr.max) newData[`data.attributes.${attribute}.value`] = attr.max;
+            else if(attr.value - recover < 0) newData[`data.attributes.${attribute}.value`] = 0;
+            else newData[`data.attributes.${attribute}.value`] = attr.value - recover;
+            return newData;
+        }
+
+
+        function getSavingRoll(data, saving, mod) {
+            let baseMod = data.abilities[saving].save;
+            let bonusMod = data.abilities[saving].saveBonus;
+            let allMod = data.bonuses.abilities.save;
+            let baseRoll = (mod == "adv" ? "2d20kh" : (mod == "dis" ? "2d20kl" : "1d20"));
+            return baseRoll + (baseMod >= 0 ? "+" : "") + baseMod + (bonusMod != 0 ? bonusMod > 0 ? "+" + bonusMod : bonusMod : "") + (allMod ? (allMod.match(/-?\d+/g)[0] >= 0 ? "+" : "") + allMod : "");
+        }
+
+        function doCheck(data, dc, saving, savingName, activity, success, failure) {
+            const mod = window.event.altKey ? "adv" : window.event.ctrlKey ? "dis" : "nor";
+            const savingRoll = new Roll(getSavingRoll(data, saving, mod), data).roll({async : false});
+            let flavor = `${activity} - ${savingName} Saving Throw ${mod === "adv" ? "(Advantage)" : mod === "dis" ? "(Disadvantage)" : ""} &nbsp; <span style="font-size: large; float: right;color:${dc <= savingRoll.total ? "green\">✔" : "red\">✕"}</span>
+            <br/>${dc <= savingRoll.total ? success : failure}`;
+            savingRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: flavor });
+            return dc <= savingRoll.total;
+        }
+
+        function getClassBurnDice(data) {
+            const spellcasting = Object.keys(data.classes).map(x => data.classes[x].spellcasting.progression);
+            if (spellcasting.includes("full") || spellcasting.includes("pact") || Object.entries(data.classes).length === 0) return burnDices[0];
+            if (spellcasting.includes("half") || spellcasting.includes("artificer")) return burnDices[1];
+            if (spellcasting.includes("third")) return burnDices[2];
+            else null;
+        }
+
+        function getFinalDice(data, bonus) {
+            const classDice = burnDices.indexOf(getClassBurnDice(data));
+            const diceIndex = burnDices.indexOf(data.spells.bd ? data.spells.bd : getClassBurnDice(data)) - bonus;
+            if (diceIndex < classDice) return burnDices[classDice];
+            if (diceIndex >= burnDices.length) return burnDices[burnDices.length - 1];
+            return burnDices[diceIndex];
+        }
+
+        async function editHitDice(dices) {
+            const newHitDices = [];
+
+            tActor.itemTypes.class.sort((a, b) => {
+                if (dices > 0) return b.data.data.hitDice.replace('d', '') - a.data.data.hitDice.replace('d', '');
+                return a.data.data.hitDice.replace('d', '') - b.data.data.hitDice.replace('d', '');
+            }).forEach(item => {
+                if (dices > 0) {
+                    if (dices > item.data.data.hitDiceUsed) {
+                        newHitDices.push({ _id: item.id, "data.hitDiceUsed": 0 });
+                        dices -= item.data.data.hitDiceUsed;
+                    } else {
+                        newHitDices.push({ _id: item.id, "data.hitDiceUsed": item.data.data.hitDiceUsed - dices });
+                        dices = 0;
+                    }
+
+                } else {
+                    if (-dices > item.data.data.levels - item.data.data.hitDiceUsed) {
+                        newHitDices.push({ _id: item.id, "data.hitDiceUsed": item.data.data.levels });
+                        dices += item.data.data.levels - item.data.data.hitDiceUsed;
+                    } else {
+                        newHitDices.push({ _id: item.id, "data.hitDiceUsed": item.data.data.hitDiceUsed - dices });
+                        dices = 0;
+                    }
+
+                }
+
+            });
+
+            tActor.updateEmbeddedDocuments("Item", newHitDices);
+        }
+    }
+
+    /* ------------------------------------ */
+    /* Macro de Cook Food Camping			*/
+    /* ------------------------------------ */
+    static async cookFood() {
+        const tFrigo = game.actors.getName("Refrigerator");
+        const tActor = _token.actor;
+        const campFails = parseInt((game.journal.getName("Camping Fails").data.content.match(/-?\d+/g) || ['0'])[0]);
+        const activityDC = campFails >= 2 ? 15 : (campFails == 1 ? 10 : 5);
+
+        const crafting = [
+            { label: "Create Rations", in: 1, typeIn: "Cooking Supplies", out: "1d4+1", typeOut: "Edible Rations" },
+            { label: "Stretch Rations", in: 1, typeIn: "Edible Rations", out: 2, typeOut: "Simple Meal" },
+            { label: "Cook a hot meal", in: 1, typeIn: "Edible Rations", out: 1, typeOut: "Cooked Meal" },
+        ]
+
+        const supplies = crafting.reduce((curr, act) => {
+            if (!Object.keys(curr).includes(act.typeIn))
+                curr[act.typeIn] = tFrigo.items.filter(item => item.name === act.typeIn).reduce((prev, curr, index) => {
+                    let res = prev + curr.data.data.quantity
+                    if (index > 0) curr.delete();
+                    return res;
+                }, 0);
+            return curr;
+        }, {});
+
+        let confirmed;
+
+        new Dialog({
+            title: `Cook Food [ ${Object.keys(supplies).map(supply => `${supply.split(" ")[1]}: ${supplies[supply]}`).join(" | ")} ]`,
+            content: createForm(supplies, crafting),
+            buttons: {
+                one: {
+                    icon: '<i class="fas fa-utensils"></i>',
+                    label: "Cook",
+                    callback: () => confirmed = true
+                }
+            },
+            default: "Cancel",
+            close: html => {
+                const selectedCraft = crafting.find(x=> x.label == html.find("[name='crafting']")[0].value);
+
+                if (confirmed && selectedCraft) {
+                    let usedItem = tFrigo.items.getName(selectedCraft.typeIn);
+                    updateItemQuantity(usedItem, supplies[selectedCraft.typeIn] - selectedCraft.in);
+
+                    const craftedQuantity = new Roll(`${selectedCraft.out}`).roll({async : false}).total;
+                    let success = doCheck(tActor.getRollData(), activityDC, "sur", "Survival", "Cook Food", `The meal is well made, you recive ${craftedQuantity} ${selectedCraft.typeOut}.`, `You spoiled the meal and wasted ${selectedCraft.in} ${selectedCraft.typeIn}.`);
+
+                    if (success) {
+                        //game.macros.getName("GM Cooking Mama").execute(selectedCraft, craftedQuantity);
+                        socketlibSocket.executeAsGM("cookingMama", selectedCraft, craftedQuantity)
+                    }
+                }
+            }
+        }).render(true);
+
+        function createForm(supplies, options) {
+            return `<form>
+            <div class="form-group">
+                <select name="crafting">
+                    ${options.filter(x => x.in <= supplies[x.typeIn]).map((craft) => `<option value="${craft.label}"> ${craft.label} [ ${craft.in} ${craft.typeIn.split(" ")[1]} ➠ ${craft.out} ${craft.typeOut} ]</option>`).join('\n')}
+                </select>
+            </div>
+            </form>`;
+        }
+
+        function getSkillRoll(data, skill, mod) {
+            let baseMod;
+            
+            if (data.gmm){
+                baseMod = data.gmm.monster.data.skills.find(x => x.code.startsWith(skill)).value;
+            }
+            else{
+                baseMod = data.skills[skill].mod + data.skills[skill].prof.flat;
+            }
+            
+            let bonusMod = data.skills[skill].bonus;
+            let allMod = data.bonuses.abilities.check;
+            let baseRoll = (mod == "adv" ? "2d20kh" : (mod == "dis" ? "2d20kl" : "1d20"));
+            
+            return baseRoll + (baseMod >= 0 ? "+" : "") + baseMod + (bonusMod != 0 ? bonusMod > 0 ? "+" + bonusMod : bonusMod : "") + (allMod ? (allMod.match(/-?\d+/g)[0] >= 0 ? "+" : "") + allMod : "");
+        }
+
+        function doCheck(data, dc, skill, skillName, activity, success, failure) {
+            const mod = window.event.altKey ? "adv" : window.event.ctrlKey ? "dis" : "nor";
+            const skillRoll = new Roll(getSkillRoll(data, skill, mod), data).roll({async : false});
+            let flavor = `${activity} - ${skillName} Check ${mod === "adv" ? "(Advantage)" : mod === "dis" ? "(Disadvantage)" : ""} &nbsp; <span style="font-size: large; float: right;color:${dc <= skillRoll.total ? "green\">✔" : "red\">✕"}</span>
+            <br/>${dc <= skillRoll.total ? success : failure}`;
+            skillRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: flavor });
+            return dc <= skillRoll.total;
+        }
+    }
 }
-window.RuleSystems = RS

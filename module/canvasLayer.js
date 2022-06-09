@@ -1,4 +1,4 @@
-import { craftingBook } from "../scripts/craftingBook.js";
+import { craftingBook } from "./scripts/craftingBook.js";
 
 export const canvasLayer = function () {
     CONFIG.Canvas.layers["ruleSystems"] = {group: "effects", layerClass: RSLayer}
