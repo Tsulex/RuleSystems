@@ -32,8 +32,8 @@ async function MVPDialogUpdate(ev){
 
 async function cookingMama(selectedCraft, craftedQuantity){
     const refri = game.actors.getName("Refrigerator");
-    const selectedCraft = args[0];
-    const craftedQuantity = args[1];
+    //const selectedCraft = args[0];
+    //const craftedQuantity = args[1];
 
     const craftQuantity = refri.items.filter(item => item.name === selectedCraft.typeOut).reduce((prev, curr, index) => {
         let res = prev + curr.data.data.quantity

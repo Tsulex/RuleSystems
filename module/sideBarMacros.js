@@ -150,3 +150,19 @@ export const craftingBook = function () {
         ui.notifications.info("No existe la carpeta de las recetas.")
     }
 }
+
+export const mvp = function () {
+    let msg = game.messages.find(x => x.data.content.includes("<i>MVP of the Match</i>"));
+
+    if (msg){
+        msg.delete();
+    }
+
+    let users = game.users.filter(x => x.isOwner && x.character && x.active && !x.isGM).map(x => `${x.name} : <span id="${x.id}">` + 0 + `</span>`).join("<br>");
+    ChatMessage.create({
+        speaker: ChatMessage.getSpeaker(),
+        content: "<i>MVP of the Match</i><br>" + users
+    });
+
+    RuleSystemsGM.socket().executeForOthers("MVPDialog");
+}

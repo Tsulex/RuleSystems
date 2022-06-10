@@ -10,7 +10,7 @@ export const registerSettings = function () {
         type: Boolean,
         scope: 'world',
         config: true,
-        onChange: debouncedReload,
+        onChange: debouncedReload
     });
 
     game.settings.register("RuleSystems", "craftingBookName", {
@@ -20,6 +20,16 @@ export const registerSettings = function () {
         type: String,
         scope: 'world',
         config: true
+    });
+
+    game.settings.register("RuleSystems", "mvp", {
+        name: "MVP Mode",
+        hint: "Activa el sistema de MVP para combates unicos.",
+        default: true,
+        type: Boolean,
+        scope: 'world',
+        config: true,
+        onChange: debouncedReload
     });
 }
 

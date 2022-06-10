@@ -1,4 +1,4 @@
-import { craftingBook } from "./scripts/craftingBook.js";
+import { craftingBook, mvp } from "./sideBarMacros.js";
 
 export const canvasLayer = function () {
     CONFIG.Canvas.layers["ruleSystems"] = {group: "effects", layerClass: RSLayer}
@@ -29,6 +29,16 @@ export const canvasLayer = function () {
                     visible: game.settings.get("RuleSystems", "craftingBook"),
                     onClick: () => {
                         craftingBook();
+                    }
+                },
+                {
+                    icon: "fas fa-award",
+                    name: "mvp",
+                    title: "MVP",
+                    button: true,
+                    visible: game.settings.get("RuleSystems", "mvp") && game.user.isGM,
+                    onClick: () => {
+                        mvp();
                     }
                 }
             ]

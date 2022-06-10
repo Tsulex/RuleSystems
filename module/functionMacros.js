@@ -1,4 +1,4 @@
-import { socketlibSocket } from "./module/GMAction.js";
+import { socketlibSocket } from "./GMAction.js";
 
 export class RS {
     constructor() {
