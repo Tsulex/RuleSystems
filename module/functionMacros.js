@@ -9,7 +9,7 @@ export class RS {
     /* Macro de craftear objetos			*/
     /* ------------------------------------ */
     static async craftingStation() {
-        const myRecipes = game.folders.getName("Bought Recipes").contents.filter(j => j.permission >= 2).map(j => {
+        const myRecipes = game.folders.getName(game.settings.get("RuleSystems", "craftingBookName")).contents.filter(j => j.permission >= 2).map(j => {
             return Object.assign(JSON.parse(j.data.content.replace(/<\/?[^>]+(>|$)/g, "").replace(/(&nbsp;|\n)/g, '').replace(/\s\s+/g, ' ')),
             {
                 id: j.data._id,
@@ -448,7 +448,7 @@ export class RS {
     /* Macro de Cook Food Camping			*/
     /* ------------------------------------ */
     static async cookFood() {
-        const tFrigo = game.actors.getName("Refrigerator");
+        const tFrigo = game.actors.getName(game.settings.get("RuleSystems", "refigeratorName"));
         const tActor = _token.actor;
         const campFails = parseInt((game.journal.getName("Camping Fails").data.content.match(/-?\d+/g) || ['0'])[0]);
         const activityDC = campFails >= 2 ? 15 : (campFails == 1 ? 10 : 5);
@@ -487,7 +487,7 @@ export class RS {
 
                 if (confirmed && selectedCraft) {
                     let usedItem = tFrigo.items.getName(selectedCraft.typeIn);
-                    updateItemQuantity(usedItem, supplies[selectedCraft.typeIn] - selectedCraft.in);
+                    socketlibSocket.executeAsGM("updateItemQuantity", usedItem, supplies[selectedCraft.typeIn] - selectedCraft.in);
 
                     const craftedQuantity = new Roll(`${selectedCraft.out}`).roll({async : false}).total;
                     let success = doCheck(tActor.getRollData(), activityDC, "sur", "Survival", "Cook Food", `The meal is well made, you recive ${craftedQuantity} ${selectedCraft.typeOut}.`, `You spoiled the meal and wasted ${selectedCraft.in} ${selectedCraft.typeIn}.`);
@@ -534,6 +534,309 @@ export class RS {
             <br/>${dc <= skillRoll.total ? success : failure}`;
             skillRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: flavor });
             return dc <= skillRoll.total;
+        }
+    }
+
+    /* ------------------------------------ */
+    /* Macro de Brew Drinks Camping			*/
+    /* ------------------------------------ */
+    static async brewDrinks() {
+        const tFrigo = game.actors.getName(game.settings.get("RuleSystems", "refigeratorName"));
+        const tActor = _token.actor;
+        const campFails = parseInt((game.journal.getName("Camping Fails").data.content.match(/-?\d+/g) || ['0'])[0]);
+        const activityDC = campFails >= 2 ? 15 : (campFails == 1 ? 10 : 5);
+
+        const crafting = [
+            { label: "Create Rations", in: 1, typeIn: "Brewing Supplies", out: "1d4+1", typeOut: "Drinkable Rations" },
+            { label: "Brew Simple Drinks", in: 1, typeIn: "Drinkable Rations", out: 2, typeOut: "Simple Drink" },
+            { label: "Brew Hot Drinks", in: 1, typeIn: "Drinkable Rations", out: 1, typeOut: "Hot Drink" },
+        ]
+
+        const supplies = crafting.reduce((curr, act) => {
+            if (!Object.keys(curr).includes(act.typeIn))
+                curr[act.typeIn] = tFrigo.items.filter(item => item.name === act.typeIn).reduce((prev, curr, index) => {
+                    let res = prev + curr.data.data.quantity
+                    if (index > 0) curr.delete();
+                    return res;
+                }, 0);
+            return curr;
+        }, {});
+
+        let confirmed;
+
+        new Dialog({
+            title: `Brew Drinks [ ${Object.keys(supplies).map(supply => `${supply.split(" ")[1]}: ${supplies[supply]}`).join(" | ")} ]`,
+            content: createForm(supplies, crafting),
+            buttons: {
+                one: {
+                    icon: '<i class="fas fa-tint"></i>',
+                    label: "Brew",
+                    callback: () => confirmed = true
+                }
+            },
+            default: "Cancel",
+            close: html => {
+                const selectedCraft = crafting.find(x=> x.label == html.find("[name='crafting']")[0].value);
+
+                if (confirmed && selectedCraft) {
+                    let usedItem = tFrigo.items.getName(selectedCraft.typeIn);
+                    socketlibSocket.executeAsGM("updateItemQuantity", usedItem, supplies[selectedCraft.typeIn] - selectedCraft.in);
+
+                    const craftedQuantity = new Roll(`${selectedCraft.out}`).roll({async : false}).total;
+                    let success = doCheck(tActor.getRollData(), activityDC, "sur", "Survival", "Brew Drinks", `The drinks are well made, you recive ${craftedQuantity} ${selectedCraft.typeOut}.`, `You spoiled the brew and wasted ${selectedCraft.in} ${selectedCraft.typeIn}.`);
+
+                    if (success) {
+                        //game.macros.getName("GM Cooking Mama").execute(selectedCraft, craftedQuantity);
+                        socketlibSocket.executeAsGM("cookingMama", selectedCraft, craftedQuantity)
+                    }
+                }
+            }
+        }).render(true);
+
+        function createForm(supplies, options) {
+            return `<form>
+            <div class="form-group">
+                <select name="crafting">
+                    ${options.filter(x => x.in <= supplies[x.typeIn]).map((craft) => `<option value="${craft.label}"> ${craft.label} [ ${craft.in} ${craft.typeIn.split(" ")[1]} ➠ ${craft.out} ${craft.typeOut} ]</option>`).join('\n')}
+                </select>
+            </div>
+            </form>`;
+        }
+
+        function getSkillRoll(data, skill, mod) {
+            let baseMod;
+            
+            if (data.gmm){
+                baseMod = data.gmm.monster.data.skills.find(x => x.code.startsWith(skill)).value;
+            }
+            else{
+                baseMod = data.skills[skill].mod + data.skills[skill].prof.flat;
+            }
+            
+            let bonusMod = data.skills[skill].bonus;
+            let allMod = data.bonuses.abilities.check;
+            let baseRoll = (mod == "adv" ? "2d20kh" : (mod == "dis" ? "2d20kl" : "1d20"));
+            
+            return baseRoll + (baseMod >= 0 ? "+" : "") + baseMod + (bonusMod != 0 ? bonusMod > 0 ? "+" + bonusMod : bonusMod : "") + (allMod ? (allMod.match(/-?\d+/g)[0] >= 0 ? "+" : "") + allMod : "");
+        }
+
+        function doCheck(data, dc, skill, skillName, activity, success, failure) {
+            const mod = window.event.altKey ? "adv" : window.event.ctrlKey ? "dis" : "nor";
+            const skillRoll = new Roll(getSkillRoll(data, skill, mod), data).roll({async : false});
+            let flavor = `${activity} - ${skillName} Check ${mod === "adv" ? "(Advantage)" : mod === "dis" ? "(Disadvantage)" : ""} &nbsp; <span style="font-size: large; float: right;color:${dc <= skillRoll.total ? "green\">✔" : "red\">✕"}</span>
+            <br/>${dc <= skillRoll.total ? success : failure}`;
+            skillRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: flavor });
+            return dc <= skillRoll.total;
+        }
+    }
+
+    /* ------------------------------------ */
+    /* Macro de Tell Story Camping			*/
+    /* ------------------------------------ */
+    static async tellStory() {
+        const campFails = parseInt((game.journal.getName("Camping Fails").data.content.match(/-?\d+/g) || ['0'])[0]);
+        const activityDC = campFails >= 2 ? 15 : (campFails == 1 ? 10 : 5);
+
+        doCheck(_token.actor.getRollData(), activityDC, "per", "Performance", "Tell a Story", "Your story is well told and inspires an ally", "You made an embarrassing mistake");
+        
+        function getSkillRoll(data, skill, mod) {
+            let baseMod = data.skills[skill].mod + data.skills[skill].prof.flat;
+            let bonusMod = data.skills[skill].bonus;
+            let allMod = data.bonuses.abilities.check;
+            let baseRoll = (mod == "adv" ? "2d20kh" : (mod == "dis" ? "2d20kl" : "1d20"));
+            return baseRoll + (baseMod >= 0 ? "+" : "") + baseMod + (bonusMod != 0 ? bonusMod > 0 ? "+" + bonusMod : bonusMod : "") + (allMod ? (allMod.match(/-?\d+/g)[0] >= 0 ? "+" : "") + allMod : "");
+        }
+        
+        function doCheck(data, dc, skill, skillName, activity, success, failure) {
+            const mod = window.event.altKey ? "adv" : window.event.ctrlKey ? "dis" : "nor";
+            const skillRoll = new Roll(getSkillRoll(data, skill, mod), data).roll({async : false});
+            let flavor = `${activity} - ${skillName} Check ${mod === "adv" ? "(Advantage)" : mod === "dis" ? "(Disadvantage)" : ""} &nbsp; <span style="font-size: large; float: right;color:${dc <= skillRoll.total ? "green\">✔" : "red\">✕"}</span>
+            <br/>${dc <= skillRoll.total ? success : failure}`;
+            skillRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: flavor });
+        }
+    }
+
+    /* ------------------------------------ */
+    /* Macro de Play Music Camping			*/
+    /* ------------------------------------ */
+    static async playMusic() {
+        const campFails = parseInt((game.journal.getName("Camping Fails").data.content.match(/-?\d+/g) || ['0'])[0]);
+        const activityDC = campFails >= 2 ? 15 : (campFails == 1 ? 10 : 5);
+
+        doCheck(_token.actor.getRollData(), activityDC, "per", "Performance", "Play Music", "You perform well and inspire one of your allies", "You made an embarrassing mistake");
+
+        function getSkillRoll(data, skill, mod) {
+            let baseMod = data.skills[skill].mod + data.skills[skill].prof.flat;
+            let bonusMod = data.skills[skill].bonus;
+            let allMod = data.bonuses.abilities.check;
+            let baseRoll = (mod == "adv" ? "2d20kh" : (mod == "dis" ? "2d20kl" : "1d20"));
+            return baseRoll + (baseMod >= 0 ? "+" : "") + baseMod + (bonusMod != 0 ? bonusMod > 0 ? "+" + bonusMod : bonusMod : "") + (allMod ? (allMod.match(/-?\d+/g)[0] >= 0 ? "+" : "") + allMod : "");
+        }
+
+        function doCheck(data, dc, skill, skillName, activity, success, failure) {
+            const mod = window.event.altKey ? "adv" : window.event.ctrlKey ? "dis" : "nor";
+            const skillRoll = new Roll(getSkillRoll(data, skill, mod), data).roll({async : false});
+            let flavor = `${activity} - ${skillName} Check ${mod === "adv" ? "(Advantage)" : mod === "dis" ? "(Disadvantage)" : ""} &nbsp; <span style="font-size: large; float: right;color:${dc <= skillRoll.total ? "green\">✔" : "red\">✕"}</span>
+            <br/>${dc <= skillRoll.total ? success : failure}`;
+            skillRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: flavor });
+        }
+    }
+
+    /* ------------------------------------ */
+    /* Macro de Play Game Camping			*/
+    /* ------------------------------------ */
+    static async playGame() {
+        let message = game.messages.find(x => x.data.content === "<i>Wants to play a duo game...</i>");
+
+        if (message) {
+            if(message.data.speaker.token != _token.id) {
+                //game.macros.getName("GM Play VS").execute(message.data.speaker.token, _token.id);
+                socketlibSocket.executeAsGM("playVS", message.data.speaker.token, _token.id);
+            }
+        } else {
+            ChatMessage.create({
+                speaker: ChatMessage.getSpeaker(),
+                content: "<i>Wants to play a duo game...</i>"
+            });
+        }
+    }
+
+    /* ------------------------------------ */
+    /* Macro de Relax Solitude Camping		*/
+    /* ------------------------------------ */
+    static async relaxSolitude() {
+        const campFails = parseInt((game.journal.getName("Camping Fails").data.content.match(/-?\d+/g) || ['0'])[0]);
+        const activityDC = campFails >= 2 ? 15 : (campFails == 1 ? 10 : 5);
+
+        doCheck(_token.actor.getRollData(), activityDC, "wis", "Wisdom", "Relax in Solitude", "You feel inspired by your seclusion—gain a point of inspiration", "You couldn't relax as something—or someone— was irritating you too much");
+
+        function getAbilityRoll(data, ability, mod) {
+            let baseMod = data.abilities[ability].mod + data.abilities[ability].checkProf.flat;
+            let bonusMod = data.abilities[ability].checkBonus;
+            let allMod = data.bonuses.abilities.check;
+            let baseRoll = (mod == "adv" ? "2d20kh" : (mod == "dis" ? "2d20kl" : "1d20"));
+            return baseRoll + (baseMod >= 0 ? "+" : "") + baseMod + (bonusMod != 0 ? bonusMod > 0 ? "+" + bonusMod : bonusMod : "") + (allMod ? (allMod.match(/-?\d+/g)[0] >= 0 ? "+" : "") + allMod : "");
+        }
+
+        function doCheck(data, dc, ability, abilityName, activity, success, failure) {
+            const mod = window.event.altKey ? "adv" : window.event.ctrlKey ? "dis" : "nor";
+            const abilityRoll = new Roll(getAbilityRoll(data, ability, mod), data).roll({async : false});
+            let flavor = `${activity} - ${abilityName} Check ${mod === "adv" ? "(Advantage)" : mod === "dis" ? "(Disadvantage)" : ""} &nbsp; <span style="font-size: large; float: right;color:${dc <= abilityRoll.total ? "green\">✔" : "red\">✕"}</span>
+            <br/>${dc <= abilityRoll.total ? success : failure}`;
+            abilityRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: flavor });
+        }
+    }
+
+    /* ------------------------------------ */
+    /* Macro de Lookout Camping	        	*/
+    /* ------------------------------------ */
+    static async lookout() {
+        const tActor = _token.actor;
+        const campFails = parseInt((game.journal.getName("Camping Fails").data.content.match(/-?\d+/g) || ['0'])[0]);
+        const activityDC = campFails >= 2 ? 15 : (campFails == 1 ? 10 : 5);
+
+        const success = doCheck(_token.actor.getRollData(), activityDC, "sur", "Intelligence (Survival)", "Lookout", "You noted some weak spots in the camp's defense and secured them.", "You made a bad job of securing the camp. You have disadvantage on perception checks against any would-be intruders while camping");
+
+        if(!success) daeDebuff();
+
+        function getSkillRoll(data, skill, mod) {
+            let baseMod = data.abilities["int"].mod + data.skills[skill].prof.flat;
+            let bonusMod = data.skills[skill].bonus;
+            let allMod = data.bonuses.abilities.check;
+            let baseRoll = (mod == "adv" ? "2d20kh" : (mod == "dis" ? "2d20kl" : "1d20"));
+            return baseRoll + (baseMod >= 0 ? "+" : "") + baseMod + (bonusMod != 0 ? bonusMod > 0 ? "+" + bonusMod : bonusMod : "") + (allMod ? (allMod.match(/-?\d+/g)[0] >= 0 ? "+" : "") + allMod : "");
+        }
+
+        function doCheck(data, dc, skill, skillName, activity, success, failure) {
+            const mod = window.event.altKey ? "adv" : window.event.ctrlKey ? "dis" : "nor";
+            const skillRoll = new Roll(getSkillRoll(data, skill, mod), data).roll({async : false});
+            let flavor = `${activity} - ${skillName} Check ${mod === "adv" ? "(Advantage)" : mod === "dis" ? "(Disadvantage)" : ""} &nbsp; <span style="font-size: large; float: right;color:${dc <= skillRoll.total ? "green\">✔" : "red\">✕"}</span>
+            <br/>${dc <= skillRoll.total ? success : failure}`;
+            skillRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: flavor });
+            return dc <= skillRoll.total;
+        }
+
+        async function daeDebuff() {
+            let effectData = {
+                label: 'Lookout Fail',
+                icon: 'icons/skills/melee/shield-damaged-broken-gold.webp',
+                origin: tActor.uuid,
+                disabled: false,
+                flags: { dae: { macroRepeat: "none", stackable: "multi", specialDuration: ["shortRest"] } },
+                duration: { rounds: 999999, seconds: 999999, startRound: game.combat ? game.combat.rounds : 0, startTime: game.time.worldTime },
+                changes: [
+                    { key: 'flags.midi-qol.disadvantage.skill.prc', mode: 2, value: '0', priority: 20 },
+                ]
+            };
+
+            await MidiQOL.socket().executeAsGM("createEffects", { actorUuid: tActor.uuid, effects: [effectData] });
+        }
+    }
+
+    /* ------------------------------------ */
+    /* Macro de Making Camp Camping	       	*/
+    /* ------------------------------------ */
+    static async makingCamp() {
+        const campingSkills = [
+            { key: "sur", label: "Survival" },
+            { key: "ath", label: "Athletics" },
+            { key: "ani", label: "Animal Handling" },
+            { key: "nat", label: "Nature" },
+            { key: "rel", label: "Religion" }
+        ]
+        
+        const campingDC = parseInt(game.journal.getName("Camping Check DC").data.content.match(/-?\d+/g)[0]);
+        let confirmed;
+        
+        new Dialog({
+            title: "Making a camp",
+            content: createForm(_token.actor.getRollData(), campingSkills),
+            buttons: {
+                one: {
+                    icon: '<i class="fas fa-campground"></i>',
+                    label: "Help setting up the camp",
+                    callback: () => confirmed = true
+                }
+            },
+            default: "Cancel",
+            close: html => {
+                if (confirmed) {
+                    const mod = window.event.altKey ? "adv" : window.event.ctrlKey ? "dis" : "nor";
+                    const skill = campingSkills[html.find("[name='skill']")[0].value];
+                    doRoll(_token.actor.getRollData(), campingDC, skill.key, skill.label, mod);
+                }
+            }
+        }).render(true);
+        
+        function createForm(data, options) {
+            return `<form>
+            <div class="form-group">
+                <select name="skill">
+                    ${options.sort((a, b) => getSkillData(data, b.key) - getSkillData(data, a.key)).map((skill, index) => `<option value="${index}"> ${skill.label} [ ${getSkillData(data, skill.key)} ]</option>`).join('\n')}
+                </select>
+            </div>
+            </form>`;
+        }
+        
+        function getSkillData(data, skill) {
+            return data.skills[skill].mod + data.skills[skill].prof.flat + data.skills[skill].bonus;
+        }
+        
+        function getSkillRoll(data, skill, mod) {
+            let baseMod = data.skills[skill].mod + data.skills[skill].prof.flat;
+            let bonusMod = data.skills[skill].bonus;
+            let allMod = data.bonuses.abilities.skill;
+            let baseRoll = (mod == "adv" ? "2d20kh" : (mod == "dis" ? "2d20kl" : "1d20"));
+            return baseRoll + (baseMod >= 0 ? "+" : "") + baseMod + (bonusMod != 0 ? bonusMod > 0 ? "+" + bonusMod : bonusMod : "") + (allMod ? (allMod.match(/-?\d+/g)[0] >= 0 ? "+" : "") + allMod : "");
+        }
+        
+        function doRoll(data, dc, skill, skillName, mod) {
+            const skillRoll = new Roll(getSkillRoll(data, skill, mod), data).roll({async : false});
+        
+            skillRoll.toMessage({ speaker: ChatMessage.getSpeaker(), flavor: `Campfire ${skillName} Skill Check ${mod === "adv" ? "(Advantage)" : mod === "dis" ? "(Disadvantage)" : ""} &nbsp; <span style="font-size: large; float: right;color:${dc <= skillRoll.total ? "green\">✔" : "red\">✕"}</span>` });
+            if (dc > skillRoll.total) {
+                game.macros.getName("GM Camping Fail Up").execute()
+            }
         }
     }
 }

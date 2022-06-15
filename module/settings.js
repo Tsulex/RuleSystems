@@ -31,6 +31,15 @@ export const registerSettings = function () {
         config: true,
         onChange: debouncedReload
     });
+
+    game.settings.register("RuleSystems", "refigeratorName", {
+        name: "Refrigerator Name",
+        hint: "Poner el nombre del token que servira para almacenar el alimento.",
+        default: "Refrigerator",
+        type: String,
+        scope: 'world',
+        config: true
+    });
 }
 
 const debouncedReload = debounce(() => {

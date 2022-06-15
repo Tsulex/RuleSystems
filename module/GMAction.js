@@ -6,8 +6,13 @@ export let setupSocket = () => {
     socketlibSocket.register("MVPDialogUpdate", MVPDialogUpdate);
     socketlibSocket.register("cookingMama", cookingMama);
     socketlibSocket.register("updateItemQuantity", updateItemQuantity);
+    socketlibSocket.register("playVS", playVS);
 }
 
+
+/* ------------------------------------ */
+/* 		*/
+/* ------------------------------------ */
 async function MVPDialog(){
     const nvpDialog = new Dialog({
         title: "MVP",
@@ -22,6 +27,9 @@ async function MVPDialog(){
     },{width:game.users.filter(x => !x.isOwner && x.character && x.active && !x.isGM).length*260}).render(true);
 }
 
+/* ------------------------------------ */
+/* 			*/
+/* ------------------------------------ */
 async function MVPDialogUpdate(ev){
     let msg = game.messages.find(x => x.data.content.includes("<i>MVP of the Match</i>"));
     let msgContent = new DOMParser().parseFromString(msg.data.content, 'text/html')
@@ -30,11 +38,11 @@ async function MVPDialogUpdate(ev){
     await msg.update({content: msgContent.body.innerHTML});
 }
 
+/* ------------------------------------ */
+/* 			*/
+/* ------------------------------------ */
 async function cookingMama(selectedCraft, craftedQuantity){
-    const refri = game.actors.getName("Refrigerator");
-    //const selectedCraft = args[0];
-    //const craftedQuantity = args[1];
-
+    const refri = game.actors.getName(game.settings.get("RuleSystems", "refigeratorName"));
     const craftQuantity = refri.items.filter(item => item.name === selectedCraft.typeOut).reduce((prev, curr, index) => {
         let res = prev + curr.data.data.quantity
         if (index > 0) curr.delete();
@@ -51,10 +59,21 @@ async function cookingMama(selectedCraft, craftedQuantity){
     } else socketlibSocket.executeAsGM("updateItemQuantity", craftedItem, craftQuantity);
 }
 
+/* ------------------------------------ */
+/* 			*/
+/* ------------------------------------ */
 async function updateItemQuantity(item, quantity) {
     if (quantity === 0) {
         item.delete();
     } else {
         item.update({ 'data.quantity': quantity });
     }
+}
+
+/* ------------------------------------ */
+/* 			*/
+/* ------------------------------------ */
+async function playVS(msg, token){
+    game.MonksTokenBar.requestContestedRoll({token: canvas.scene.tokens.get(msg)._object, request: 'ability:int'}, {token: canvas.scene.tokens.get(token)._object, request: 'ability:int'}, {silent: true, rollMode:'roll'});
+    game.messages.find(x => x.data.content === "<i>Wants to play a duo game...</i>").delete();
 }
