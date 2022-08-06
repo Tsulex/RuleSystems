@@ -22,7 +22,7 @@ export const canvasLayer = function () {
             layer: "ruleSystems",
             tools: [
                 {
-                    icon: "fas fa-books",
+                    icon: "fas fa-volume",
                     name: "whisper",
                     title: "Whisper",
                     button: true,
