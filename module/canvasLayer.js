@@ -23,6 +23,16 @@ export const canvasLayer = function () {
             tools: [
                 {
                     icon: "fas fa-books",
+                    name: "whisper",
+                    title: "Whisper",
+                    button: true,
+                    visible: true,
+                    onClick: () => {
+                        whisper();
+                    }
+                },
+                {
+                    icon: "fas fa-books",
                     name: "craftingbook",
                     title: "Crafting Book",
                     button: true,
