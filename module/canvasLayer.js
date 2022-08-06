@@ -1,4 +1,4 @@
-import { craftingBook, mvp } from "./sideBarMacros.js";
+import { craftingBook, mvp, whisper } from "./sideBarMacros.js";
 
 export const canvasLayer = function () {
     CONFIG.Canvas.layers["ruleSystems"] = {group: "effects", layerClass: RSLayer}
