@@ -843,26 +843,24 @@ export class RS {
     /* ------------------------------------ */
     /* Macro de Start Poker Game	       	*/
     /* ------------------------------------ */
-    static async startPokerGame() {
+    static async startPokerGame(players) {
 
         let cards = ["clubs-02", "clubs-03", "clubs-04", "clubs-05", "clubs-06", "clubs-07", "clubs-08", "clubs-09", "clubs-10", "clubs-ace", "clubs-jack", "clubs-king", "clubs-queen",
         "diamonds-02", "diamonds-03", "diamonds-04", "diamonds-05", "diamonds-06", "diamonds-07", "diamonds-08", "diamonds-09", "diamonds-10", "diamonds-ace", "diamonds-jack", "diamonds-king", "diamonds-queen", 
         "hearts-02", "hearts-03", "hearts-04", "hearts-05", "hearts-06", "hearts-07", "hearts-08", "hearts-09", "hearts-10", "hearts-ace", "hearts-jack", "hearts-king", "hearts-queen", 
-        "spades-02", "spades-03", "spades-04", "spades-05", "spades-06", "spades-07", "spades-08", "spades-09", "spades-10", "spades-ace", "spades-jack", "spades-king", "spades-queen", "red-joker"];
+        "spades-02", "spades-03", "spades-04", "spades-05", "spades-06", "spades-07", "spades-08", "spades-09", "spades-10", "spades-ace", "spades-jack", "spades-king", "spades-queen", "joker"];
 
         let shuffled = cards.sort(() => Math.random() - 0.5);
         let hands = {};
 
-        game.users.filter(x => x.character && x.active && !x.isGM).forEach(x => {
+        (players || game.users.filter(x => x.character && x.active && !x.isGM)).forEach(x => {
             hands[x.charname] = { cards : [shuffled.pop(), shuffled.pop(), shuffled.pop(), shuffled.pop(), shuffled.pop()], id : x.id};
         })
         
         Object.keys(hands).forEach(x => {
             let player = hands[x];
-            socketlibSocket.executeForUsers("PokerDialog", [player.id], player.cards);
+            socketlibSocket.executeForUsers("PokerDialog", [player.id], player.cards, true);
         })
-        
-        socketlibSocket.executeForAllGMs("PokerHandsDialog", hands)
 
         if (!game.journal.getName("Poker Game")){
             JournalEntry.create({name: "Poker Game", folder: game.folders.getName("Cosos de GM").id, content: JSON.stringify({hands : hands, deck : shuffled})});

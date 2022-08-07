@@ -2,9 +2,10 @@ export var socketlibSocket = undefined;
 
 export let setupSocket = () => {
     socketlibSocket = globalThis.socketlib.registerModule("RuleSystems");
-    socketlibSocket.register("PokerPlayerDiscardDialog", PokerPlayerDiscardDialog);
-    socketlibSocket.register("PokerHandsDialog", PokerHandsDialog);
-    socketlibSocket.register("PokerDialog", PokerDialog);
+    socketlibSocket.register("PokerPlayerConfirm", pokerPlayerConfirm);
+    socketlibSocket.register("PokerPlayerDiscardDialog", pokerPlayerDiscardDialog);
+    socketlibSocket.register("PokerAllHandsDialog", pokerAllHandsDialog);
+    socketlibSocket.register("PokerDialog", pokerDialog);
     socketlibSocket.register("MVPDialog", MVPDialog);
     socketlibSocket.register("MVPDialogUpdate", MVPDialogUpdate);
     socketlibSocket.register("cookingMama", cookingMama);
@@ -17,39 +18,84 @@ export let setupSocket = () => {
 /* ------------------------------------ */
 /* Poker System Player Discard          */
 /* ------------------------------------ */
-async function PokerPlayerDiscardDialog(charname, discard){
+async function pokerPlayerDiscardDialog(charname, discard){
     const journal = game.journal.getName("Poker Game");
     const pokerData = JSON.parse(journal.data.content);
     discard.forEach(x => {
         pokerData.hands[charname].cards[x] = pokerData.deck.pop();
     })
     journal.update({content : JSON.stringify(pokerData)});
-    socketlibSocket.executeForUsers("PokerDialog", [pokerData.hands[charname].id], pokerData.hands[charname].cards);
+    socketlibSocket.executeForUsers("PokerDialog", [pokerData.hands[charname].id], pokerData.hands[charname].cards, false);
+}
+
+/* ------------------------------------ */
+/* Poker System Confirm                 */
+/* ------------------------------------ */
+async function pokerPlayerConfirm(charname){
+    const journal = game.journal.getName("Poker Game");
+    const pokerData = JSON.parse(journal.data.content);
+    pokerData.hands[charname].confirmed = true;
+    journal.update({content : JSON.stringify(pokerData)});
+
+    if (Object.keys(pokerData.hands).every(x => pokerData.hands[x].confirmed)){
+        const PokerDialog = new Dialog({
+            title: "Poker Game - Waiting",
+            content: `Esperando a las apuestas finales de todo el mundo.`,
+            buttons: { confirm : {icon : ``, label : `Confirm`, callback : (html) => socketlibSocket.executeForEveryone("PokerAllHandsDialog", pokerData.hands)} }
+        }).render(true);
+    }
 }
 
 /* ------------------------------------ */
 /* Poker System Hands                   */
 /* ------------------------------------ */
-async function PokerHandsDialog(hands){
+async function pokerAllHandsDialog(hands){
+    let a = [];
+    Object.keys(hands).forEach(x => { hands[x].cards.forEach(x => a.push(x))});
 
     const PokerDialog = new Dialog({
-        title: "Poker Game - Players Hands",
-        content: `${JSON.stringify(hands)}`,
+        title: "Poker Game - Final Hands",
+        content: `<style>.poker-card:hover{box-shadow: 0 0 10px white !important;} </style> <div style="display: flex;flex-direction: row;min-height: 192px;">${a.map((x, index) => `<button class="poker-card" value="${index}" style="background:url(/cards/dark-gold/${x}.webp); background-repeat: no-repeat; background-size: contain;"/>`).join("")}</div>`,
         buttons: {}
-        //aqui llamar a PokerPlayerDiscardDialog (pasar charname)
-    }).render(true);
+    },{width : 640, height : 250}).render(true);
 }
 
 /* ------------------------------------ */
 /* Poker System Players                 */
 /* ------------------------------------ */
-async function PokerDialog(cards){
+async function pokerDialog(cards, discard){
+    
+    let contentButtons = {};
+    if (discard){
+        contentButtons = { discard : {icon : ``, label : `Discard`, callback : (html) => socketlibSocket.executeAsGM("PokerPlayerDiscardDialog", game.user.charname, discards)} }
+    }
+    else{
+        contentButtons = { confirm : {icon : ``, label : `Confirm`, callback : (html) => socketlibSocket.executeAsGM("PokerPlayerConfirm", game.user.charname)} }
+    }
 
-    const PokerDialog = new Dialog({
-        title: "Poker Game",
-        content: `${cards[0]} - ${cards[1]} - ${cards[2]} - ${cards[3]} - ${cards[4]}`,
-        buttons: {}
-    }).render(true);
+    let discards = [];
+
+    const pokerDialog = new Dialog({
+        title: "Poker Hand",
+        content: `<style>.poker-card:hover{box-shadow: 0 0 10px white !important;} </style><div style="display: flex;flex-direction: row;min-height: 384px;">${cards.map((x, index) => `<button class="poker-card" value="${index}" style="background:url(/cards/dark-gold/${x}.webp); background-repeat: no-repeat; background-size: contain;"/>`).join("")}</div>`,
+        buttons: contentButtons,
+        render: html => {
+            if (discard){
+                html.find('.poker-card').on("click", (ev) => {
+                    let indexCard = ev.target.value;
+    
+                    if (!discards.includes(indexCard)){
+                        discards.push(indexCard)
+                        ev.target.style.backgroundImage = 'url("/cards/backs/dark-gold.webp")';
+                    }
+                    else{
+                        ev.target.style.backgroundImage = `url("/cards/dark-gold/${cards[indexCard]}.webp")`;
+                        discards = discards.filter(x => x != indexCard);
+                    }
+                })
+            }
+        }
+    },{width : 1280, height : 500}).render(true);
 }
 
 /* ------------------------------------ */

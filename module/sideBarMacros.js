@@ -168,7 +168,6 @@ export const mvp = function () {
 }
 
 export const whisper = function () {
-    console.log("PRUEBA")
     let users = game.users.filter(user => user.active && user.id !== game.user.id);
     let checkOptions = ""
     let playerTokenIds = users.map(u => u.character?.id).filter(id => id !== undefined);
