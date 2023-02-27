@@ -40,3 +40,20 @@
 	padding: 2em;
 	min-width: 450px;
 }
+
+.activity span.count {
+    position: relative;
+    background-color: #111;
+    width: 18px;
+    height: 18px;
+    border-radius: 18px;
+    bottom: 35px;
+    right: 15px;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+}
+
+.activity.selected span.count {
+    opacity: 1;
+}

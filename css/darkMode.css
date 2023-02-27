@@ -1,4 +1,4 @@
-body{
+/*body{
 	background-color: #111;
 }
 
@@ -31,6 +31,11 @@ a.entity-link-disabled {background: #DDD; padding: 1px 4px; border: 1px solid #4
 
 .dark-mode .dnd5e.sheet.actor .spell-component.C, .dnd5edark.sheet.actor .spell-component.R {background: rgba(228, 184, 210, 0.72) !important;}
 
+.gm-screen-actions.tabs button.item, .gm-screen-actions.tabs button.clear, .gm-screen-actions.tabs button.refresh, .gm-screen-actions.tabs button.gm-screen-button {
+    background: #111 !important;
+}
+*/
+
 .tidy5e.sheet.actor .list-layout .items-list .item i {
     vertical-align: baseline !important;
     width: auto !important;
@@ -61,10 +66,6 @@ a.entity-link-disabled {background: #DDD; padding: 1px 4px; border: 1px solid #4
     left: 130% !important;
 }
 
-.gm-screen-actions.tabs button.item, .gm-screen-actions.tabs button.clear, .gm-screen-actions.tabs button.refresh, .gm-screen-actions.tabs button.gm-screen-button {
-    background: #111 !important;
-}
-
-.tidy5eDark option {
+/*.tidy5eDark option {
     background: #222;
-}
+}*/

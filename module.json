@@ -1,33 +1,44 @@
-{
-    "name": "RuleSystems",
-    "title": "Rule Systems",
-    "description": "Configura todo lo referente a la partida de Rol",
-    "system": ["dnd5e"],
-    "authors": [{"name": "Tsulex"}],
-    "socket": true,
-    "version": "0.0.1",
-    "minimumCoreVersion": "9",
-    "compatibleCoreVersion": "9",
-    "minimumSystemVersion": "1.5.0",
-    "esmodules": [
-        "ruleSystems.js"
-    ],
-	"scripts": [
-	],
-    "styles": [
-        "css/darkMode.css",
-		"css/jewelsSelector.css",
-        "css/longRestActivities.css",
-        "css/loot.css",
-        "css/mailbox.css",
-        "css/recipes.css"
-	],
-    "dependencies": [
-        {
-        "name": "socketlib", "type": "module"
-        }
-    ],
-    "url": "https://github.com/Tsulex/RuleSystems",
-    "manifest": "https://raw.githubusercontent.com/Tsulex/RuleSystems/master/module.json",
-    "download": "https://github.com/Tsulex/RuleSystems/archive/refs/heads/master.zip"
+{ 
+  "id": "RuleSystems",
+  "title": "Rule Systems",
+  "description": "Configura todo lo referente a la partida de Rol",
+  "authors": [
+    {
+      "name": "Tsulex",
+      "flags": {}
+    }
+  ],
+  "socket": true,
+  "version": "0.0.2",
+  "esmodules": [
+    "ruleSystems.js"
+  ],
+  "styles": [
+    "css/darkMode.css",
+    "css/jewelsSelector.css",
+    "css/longRestActivities.css",
+    "css/loot.css",
+    "css/mailbox.css",
+    "css/recipes.css",
+    "css/MVP.css",
+    "css/poker.css",
+    "css/wanted.css"
+  ],
+  "url": "https://github.com/Tsulex/RuleSystems",
+  "manifest": "https://raw.githubusercontent.com/Tsulex/RuleSystems/master/module.json",
+  "download": "https://github.com/Tsulex/RuleSystems/archive/refs/heads/master.zip",
+  "relationships": {
+    "requires": [
+      {
+        "id": "socketlib",
+        "type": "module",
+        "compatibility": {}
+      }
+    ]
+  },
+  "compatibility": {
+    "minimum": "10",
+    "maximum": "10",
+    "verified": "285"
+  }
 }

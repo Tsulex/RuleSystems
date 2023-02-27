@@ -1,0 +1,237 @@
+    /* ------------------------------------ */
+    /* Macro de Long Rest 7 Days	       	*/
+    /* ------------------------------------ */
+    static async longRest(){
+
+        const lifeStyle = JSON.parse(game.journal.getName(game.settings.get("RuleSystems", "long-rest-life-style")).pages.find(x => x.name == canvas.scene.name).text.content.replaceAll("&nbsp;", "").replace(/<\/?[^>]+(>|$)/g, ""))
+        const rollData = _token.actor.getRollData();
+        const gold = getGold(rollData);
+        const affordableOptions = lifeStyle.filter(style => style.price <= gold);
+
+        let confirmed;
+
+        new Dialog({
+            title: "Long Rest",
+            content: createForm(affordableOptions, rollData),
+            buttons: {
+                one: {
+                    icon: '<i class="fas fa-check"></i>',
+                    label: "Confirm",
+                    callback: () => confirmed = true
+                },
+                two: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: "Cancel",
+                    callback: () => confirmed = false
+                }
+            },
+            default: "Cancel",
+            close: html => {
+                if (confirmed) {
+                    let styleSelected = affordableOptions[html.find("[name='long-rest']")[0].value];
+                    doRest(styleSelected, rollData);
+                }
+            }
+        }).render(true);
+
+
+        function createForm(options, data) {
+            const randomId = (Math.random() + 1).toString(36).substring(7);
+
+            let html = `<form>
+                <div class="form-group">
+                    <select name="long-rest" onchange="for (let el of document.querySelectorAll('.stats-${randomId}')) el.style.display = 'none'; document.getElementById('stats-${randomId}-'+this.selectedIndex).style.display = 'table';">
+                        ${options.map((style, index) => `<option value="${index}">${style.label} ${style.price}gp</option>`).join('\n')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div name="new-stats">
+                        ${options.map(style => getStats(style, data)).map((s, index) => `<table id="stats-${randomId}-${index}" class="stats-${randomId}" style="width:100%;text-align: center;font-family: monospace;border: 0;line-height: 1.5;display: ${index == 0 ? 'table' : 'none'}"><tbody style="width:100%">
+            <tr>
+                <td style="width: 10%;"><i class="fas fa-dice-d20"></i></td>
+                <td style="width: 35%;">Hit Dice</td>
+                <td style="width: 20%;">${s.hd.old}</td>
+                <td style="width: 10%;">=&gt;</td>
+                <td style="width: 25%;">${s.hd.new} (<span style="color: ${s.hd.inc == 0 ? '' : s.hd.inc > 0 ? '#67a481' : '#ff7265'}">${s.hd.inc > 0 ? '+' : ''}${s.hd.inc}</span>)</td>
+            </tr><tr>
+                <td style="width: 10%;"><i class="fas fa-heart"></i></td>
+                <td style="width: 35%;">Max Hit Points</td>
+                <td style="width: 20%;">${s.hp.old}</td>
+                <td style="width: 10%;">=&gt;</td>
+                <td style="width: 25%;">${s.hp.new} (<span style="color: ${s.hp.inc == 0 ? '' : s.hp.inc > 0 ? '#67a481' : '#ff7265'}">${s.hp.inc > 0 ? '+' : ''}${s.hp.inc}</span>)</td>
+            </tr><tr>
+                <td style="width: 10%;"><i class="fas fa-utensils"></i></td>
+                <td style="width: 35%;">Hunger</td>
+                <td style="width: 20%;">${s.hunger.old}</td>
+                <td style="width: 10%;">=&gt;</td>
+                <td style="width: 25%;">${s.hunger.new} (<span style="color: ${s.hunger.inc == 0 ? '' : s.hunger.inc < 0 ? '#67a481' : '#ff7265'}">${s.hunger.inc > 0 ? '+' : ''}${s.hunger.inc}</span>)</td>
+            </tr><tr>
+                <td style="width: 10%;"><i class="fas fa-tint"></i></td>
+                <td style="width: 35%;">Thirst</td>
+                <td style="width: 20%;">${s.thirst.old}</td>
+                <td style="width: 10%;">=&gt;</td>
+                <td style="width: 25%;">${s.thirst.new} (<span style="color: ${s.thirst.inc == 0 ? '' : s.thirst.inc < 0 ? '#67a481' : '#ff7265'}">${s.thirst.inc > 0 ? '+' : ''}${s.thirst.inc}</span>)</td>
+            </tr><tr>
+                <td style="width: 10%;"><i class="fas fa-face-tired"></i></td>
+                <td style="width: 35%;">Exhaustion</td>
+                <td style="width: 20%;">${s.exhaustion.old}</td>
+                <td style="width: 10%;">=&gt;</td>
+                <td style="width: 25%;">${s.exhaustion.new} (<span style="color: ${s.exhaustion.inc == 0 ? '' : s.exhaustion.inc < 0 ? '#67a481' : '#ff7265'}">${s.exhaustion.inc > 0 ? '+' : ''}${s.exhaustion.inc}</span>)</td>
+            </tr>
+        </tbody></table>`).join('\n')}
+                    </div>
+                </div>
+            </form>`;
+            return html;
+        }
+
+        function getStats(style, data) {
+            let hungerInc = (data.attributes.hunger?.value || 0) + 1;
+            let thirstInc = (data.attributes.thirst?.value || 0) + 1;
+            return {
+
+                hd: {
+                    new: Math.round(style.hitDice * data.details.level),
+                    old: data.details.level - Object.keys(data.classes).reduce((totalUsed, c) => totalUsed + data.classes[c].hitDiceUsed, 0),
+                    inc: Math.round(style.hitDice * data.details.level) - (data.details.level - Object.keys(data.classes).reduce((totalUsed, c) => totalUsed + data.classes[c].hitDiceUsed, 0))
+                },
+
+                hp: {
+                    new: Math.round(style.hitPoints * data.attributes.hp.max),
+                    old: data.attributes.hp.max + data.attributes.hp.tempmax,
+                    inc: Math.round(style.hitPoints * data.attributes.hp.max) - (data.attributes.hp.max + data.attributes.hp.tempmax)
+                },
+
+                hunger: {
+                    new: style.hunger ? 0 : hungerInc > (data.abilities.con.mod + 3) ? data.abilities.con.mod + 3 : hungerInc,
+                    old: data.attributes.hunger?.value || 0,
+                    inc: (style.hunger ? 0 : hungerInc > (data.abilities.con.mod + 3) ? data.abilities.con.mod + 3 : hungerInc) - (data.attributes.hunger?.value || 0)
+                },
+
+                thirst: {
+                    new: style.thirst ? 0 : thirstInc > (data.attributes.thirst?.max || 1) ? (data.attributes.thirst?.max || 1) : thirstInc,
+                    old: data.attributes.thirst?.value || 0,
+                    inc: (style.thirst ? 0 : thirstInc > (data.attributes.thirst?.max || 1) ? (data.attributes.thirst?.max || 1) : thirstInc) - (data.attributes.thirst?.value || 0)
+                },
+                exhaustion: {
+                    new: style.thirst && style.hunger ? 0 : data.attributes.exhaustion,
+                    old: data.attributes.exhaustion,
+                    inc: (style.thirst && style.hunger ? 0 : data.attributes.exhaustion) - data.attributes.exhaustion
+                }
+            }
+        }
+
+        async function doRest(style, data) {
+
+            const newStats = getStats(style, data);
+            const newData = {
+                'system.attributes.exhaustion': newStats.exhaustion.new,
+                'system.attributes.hp.tempmax': newStats.hp.new - data.attributes.hp.max,
+                'system.attributes.hp.value': newStats.hp.new,
+                'system.attributes.hunger': { value: newStats.hunger.new, max: data.abilities.con.mod + 3 },
+                'system.attributes.thirst': { value: newStats.thirst.new, max: 1 },
+                'system.currency': getCurrencyAfterPay(data, style.price)
+            };
+
+            let dices2Waste = data.details.level - newStats.hd.new;
+
+            const newItemData = [];
+
+            _token.actor.itemTypes.class.sort((a, b) => a.system.hitDice.replace('d', '') - b.system.hitDice.replace('d', '')).forEach(async item => {
+                if (dices2Waste >= item.system.levels) {
+                    newItemData.push({ _id: item.id, "system.hitDiceUsed": item.system.levels });
+                    dices2Waste -= item.system.levels;
+                } else {
+                    newItemData.push({ _id: item.id, "system.hitDiceUsed": dices2Waste });
+                    dices2Waste = 0;
+                }
+
+            });
+
+            await _token.actor.longRest({ dialog: false, chat: false, newDay: true });
+            await new Roll("1d10").roll({async : false}).toMessage({ speaker: ChatMessage.getSpeaker(), flavor: `Paid ${style.price}gp and takes a long rest. (${style.label})` });
+
+            await _token.actor.update(newData);
+            await _token.actor.updateEmbeddedDocuments("Item", newItemData);
+            
+            ///let deleteItems = _token.actor.items.filter(i => i.data.flags.world?.expires == "LR").map(i => i.id);
+            //await _token.actor.deleteEmbeddedDocuments("Item", deleteItems);
+            
+            game.macros.getName("Long Rest Activities").execute();
+        }
+
+        function getGold(data) {
+            const currency = data.currency;
+            let total = 0;
+            for (const key in currency) {
+                total += currency[key] * getCoinValue(key) / getCoinValue("gp");
+            }
+            return total;
+        }
+
+        function getCurrencyAfterPay(data, gold) {
+
+            let finalValues = duplicate(data.currency);
+            let gold2Copper = gold * getCoinValue('gp');
+
+            let missing = Object.keys(data.currency).map(key => {
+
+                return { name: key, total: data.currency[key] }
+
+                }).sort((a, b) => getCoinValue(a.name) - getCoinValue(b.name)).reduce((acc, curr) => {
+
+                    if (acc.left >= getCoinValue(curr.name)) {
+                        if (acc.left >= curr.total * getCoinValue(curr.name)) {
+                            finalValues[curr.name] = 0;
+                            return { left: acc.left - (curr.total * getCoinValue(curr.name)), currency: curr.name };
+                        } else {
+                            finalValues[curr.name] -= Math.trunc(acc.left / getCoinValue(curr.name));
+                            return { left: acc.left - (Math.trunc(acc.left / getCoinValue(curr.name)) * getCoinValue(curr.name)), currency: curr.name }
+                        }
+                    } else {
+                        if (finalValues[acc.currency] >= 1) {
+                            return acc;
+                        } else {
+                            return { left: acc.left, currency: curr.name }
+                        }
+                    }
+
+                }, { left: gold2Copper, currency: '' });
+
+                if (missing.left > 0)
+
+                    Object.keys(finalValues).map(key => {
+
+                        return { name: key, total: finalValues[key] }
+
+                    }).filter(x => getCoinValue(x.name) <= getCoinValue(missing.currency)).sort((a, b) => getCoinValue(b.name) - getCoinValue(a.name)).reduce((acc, curr) => {
+
+                        if (curr.name != acc.currency) {
+                            let paid = Math.trunc(acc.left / getCoinValue(curr.name));
+                            finalValues[acc.currency] -= 1;
+                            finalValues[curr.name] += getCoinValue(acc.currency) / getCoinValue(curr.name) - paid;
+                            return { left: acc.left - paid * getCoinValue(curr.name), currency: curr.name }
+                        } else {
+                            return acc;
+                        }
+
+                    }, missing)
+
+                    return finalValues;
+        }
+
+        function getCoinValue(coin) {
+            switch (coin) {
+                case "pp":
+                    return 99999999999999999999999999;
+                case "gp":
+                    return 100;
+                case "ep":
+                    return 25;
+                case "sp":
+                    return 25;
+                case "cp":
+                    return 1;
+            }
+        }
+    }

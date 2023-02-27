@@ -1,0 +1,54 @@
+.wanted-poster {
+    height: 340px;
+    width: 240px;
+    background-size: cover;
+    margin: 0 8px 0 0;
+    display: inline-flex;
+    text-decoration: none;
+}
+
+.wanted-poster:last-child {
+    margin: 0;
+}
+
+.wanted-board {
+    overflow-x: scroll;
+    overflow-y: hidden;
+    height: 352px;
+    text-align: center;
+}
+
+.wanted-board-content {
+    display: inline-flex;
+}
+
+.wanted-board-content i {
+    font-size: 250px;
+    color: #660e0e;
+    opacity: 0.75;
+    margin: 35px auto;
+}
+
+.wanted-information {
+    display: none;
+    padding: 30px;
+    color: #4a1717;
+}
+
+.wanted-name {
+    border: 0px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.wanted-text {
+    color: black;
+}
+
+.wanted-pay {
+    color: green;
+}
+
+.wanted-poster.selected {
+    background-image: url('../../../worlds/westernlandspirits/CartelesSeBusca/WantedPoster.webp') !important;
+}
